@@ -91,36 +91,15 @@ export function TaskForm({
 
   if (!open) return null;
 
-  try {
-    // Keyed so opening a different task remounts with fresh state.
-    return (
-      <TaskFormDialog
-        key={editingId ?? "new"}
-        editingId={editingId}
-        assignees={assignees || []}
-        task={task}
-      />
-    );
-  } catch (error) {
-    console.error("TaskForm error:", error);
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center">
-        <div className="absolute inset-0 bg-slate-900/60" />
-        <div className="relative bg-white dark:bg-slate-900 p-6 rounded-lg max-w-sm">
-          <div className="flex items-center gap-3 text-red-600 dark:text-red-400">
-            <AlertCircle className="w-5 h-5" />
-            <p>Unable to load task form</p>
-          </div>
-          <button
-            onClick={() => useUIStore.getState().closeTaskForm()}
-            className="mt-4 px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded text-sm"
-          >
-            Close
-          </button>
-        </div>
-      </div>
-    );
-  }
+  // Keyed so opening a different task remounts with fresh state.
+  return (
+    <TaskFormDialog
+      key={editingId ?? "new"}
+      editingId={editingId}
+      assignees={assignees || []}
+      task={task}
+    />
+  );
 }
 
 function TaskFormDialog({
@@ -287,7 +266,7 @@ function TaskFormDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 sm:p-0">
       <div
         className="absolute inset-0 bg-slate-900/60"
         onClick={close}
@@ -298,7 +277,7 @@ function TaskFormDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby="task-form-title"
-        className="relative bg-white w-full sm:max-w-lg max-h-[92vh] overflow-y-auto rounded-t-3xl sm:rounded-[14px] shadow-xl dark:bg-slate-900"
+        className="relative bg-white w-full sm:max-w-lg max-h-[85vh] sm:max-h-[92vh] overflow-y-auto rounded-t-3xl sm:rounded-[14px] shadow-xl dark:bg-slate-900"
       >
         <div className="sticky top-0 bg-white dark:bg-slate-900 flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-slate-800">
           <h2

@@ -9,20 +9,7 @@ import { IoEyeOutline, IoEyeOffOutline } from "react-icons/io5";
 import { toast } from "sonner";
 import { intervalToDuration } from "date-fns";
 
-const SAFE_REDIRECT_PATHS = ["/dashboard", "/tasks", "/assignees"];
-
-function safeRedirectPath(value: string | null) {
-  if (
-    value &&
-    SAFE_REDIRECT_PATHS.some(
-      (path) => value === path || value.startsWith(`${path}/`)
-    )
-  ) {
-    return value;
-  }
-
-  return "/dashboard";
-}
+import { safeRedirectPath } from "@/lib/request-security";
 
 function LoginContent() {
   const router = useRouter();
@@ -65,7 +52,7 @@ function LoginContent() {
   const isFormValid =
     email.trim() !== "" && password.trim() !== "" && !isLocked;
 
-  // proxy.ts stores the blocked path here when it bounces an unauthenticated
+  // middleware.ts stores the blocked path here when it bounces an unauthenticated
   // request, so login can return the admin to where they were headed.
   const from = safeRedirectPath(searchParams.get("from"));
 

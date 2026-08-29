@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-// proxy.ts sends unauthenticated visitors to /login before this runs.
+// middleware.ts sends unauthenticated visitors to /login before this runs.
 export default function Home() {
   redirect("/dashboard");
 }

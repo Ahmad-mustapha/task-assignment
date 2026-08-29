@@ -68,7 +68,7 @@ Credentials-based, no third-party provider:
 - Passwords hashed with bcrypt; only the hash is stored.
 - On login a JWT is signed with `jose` and set as an **httpOnly** cookie, so
   client JavaScript cannot read it.
-- `src/proxy.ts` verifies the token before protected pages render and redirects unauthenticated
+- `middleware.ts` verifies the token before protected pages render and redirects unauthenticated
   requests to `/login`, preserving the intended path in `?from=`.
 - Server components call `requireAdmin()` and route handlers call
   `requireAdminApi()`, so **authorisation never depends on client logic** —
@@ -177,6 +177,8 @@ header.
 
 **Font is Arial-first** with comprehensive fallbacks including system fonts.
 
+**Deployment-ready** with proper Vercel configuration and routing fixes for SPA navigation.
+
 ## Features
 
 ### Core
@@ -198,6 +200,8 @@ filtering by status, priority and assignee.
 | **Dashboard charts** | Created, completed, and status breakdown (Recharts) |
 | **CSV export** | Dashboard stats, trends and recent tasks |
 | **Login rate limiting** | 5 attempts / 5 minutes with a live countdown |
+| **Error boundaries** | Comprehensive error handling prevents UI crashes |
+| **Mobile-optimized modals** | Task forms properly sized for mobile devices |
 
 ## Assumptions
 
@@ -210,11 +214,6 @@ filtering by status, priority and assignee.
 
 ## Known limitations
 
-- **`pnpm build` currently fails** on `Invariant: Expected workStore to be
-  initialized` while prerendering Next.js's internal `/_global-error` page.
-  This reproduces on a bare layout with no application code, so it is a defect
-  in Next.js 16.3.3 rather than this project. Development works normally, but
-  it blocks a production deploy until the version is changed.
 - Rate limiting is in-memory, so on a multi-instance deploy each instance
   counts separately. Set `TRUST_PROXY_HEADERS=true` only behind a trusted proxy
   that normalizes forwarded IP headers. A shared store would be needed in

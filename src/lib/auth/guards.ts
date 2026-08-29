@@ -28,7 +28,7 @@ export async function getCurrentAdmin(): Promise<SessionPayload | null> {
 /**
  * Server-component guard: returns the admin or redirects to /login.
  *
- * proxy.ts already blocks unauthenticated navigation, but that runs on the
+ * middleware.ts already blocks unauthenticated navigation, but that runs on the
  * Edge before rendering. Re-checking here means a page can never render
  * without a verified session even if the matcher is misconfigured.
  */

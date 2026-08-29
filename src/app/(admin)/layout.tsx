@@ -4,7 +4,7 @@ import { AppShell } from "@/components/layout/Sidebar";
 
 /**
  * Server component: the session is verified here before anything renders, so
- * the shell never shows a "checking access" state. proxy.ts already redirects
+ * the shell never shows a "checking access" state. middleware.ts already redirects
  * unauthenticated requests; this is the guarantee behind it.
  */
 export default async function ProtectedLayout({

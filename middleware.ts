@@ -14,7 +14,7 @@ const SESSION_COOKIE = "session"
  * and route handlers call requireAdminApi(), so a bypass here still cannot
  * reach data.
  */
-export default async function proxy(request: NextRequest) {
+export default async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const token = request.cookies.get(SESSION_COOKIE)?.value
   const isAuthenticated = await isValidSession(token)
