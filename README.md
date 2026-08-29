@@ -6,8 +6,6 @@ progress. Built with Next.js (App Router), TypeScript, Prisma and Postgres.
 ## Admin credentials
 
 ```
-admin1@example.com
-Password@12
 ```
 
 ## Stack
