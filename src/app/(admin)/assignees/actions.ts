@@ -10,7 +10,7 @@ import {
   AssigneeUpdateSchema,
 } from "@/lib/validation/assignee.schema"
 import { flattenZodError, type FieldErrors } from "@/lib/api-response"
-import { Prisma } from "@/generated/prisma"
+import { Prisma } from "@prisma/client"
 
 export type ActionResult<T = void> =
   | { success: true; data: T; message: string }

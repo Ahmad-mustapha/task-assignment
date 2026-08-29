@@ -1,7 +1,7 @@
 import "server-only"
 
 import { prisma } from "@/lib/db"
-import type { Prisma } from "@/generated/prisma"
+import type { Prisma } from "@prisma/client"
 import type { TaskQueryInput } from "@/lib/validation/task.schema"
 import type {
   TaskCreateInput,

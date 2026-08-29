@@ -1,4 +1,4 @@
-import { PrismaClient } from "@/generated/prisma"
+import { PrismaClient } from "@prisma/client"
 
 // Dev hot-reload re-runs this module on every change; without the global we
 // would leak a new connection pool each time.

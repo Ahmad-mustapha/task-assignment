@@ -3,7 +3,7 @@ import "server-only"
 import { NextResponse } from "next/server"
 import { ZodError } from "zod"
 
-import { Prisma } from "@/generated/prisma"
+import { Prisma } from "@prisma/client"
 
 /** Field-level messages keyed by input name, for form display. */
 export type FieldErrors = Record<string, string[]>
