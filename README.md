@@ -226,6 +226,31 @@ filtering by status, priority and assignee.
 
 ## Features I would add with more time
 
-Drag-and-drop status changes on a board view, activity history per task, bulk
-reassignment when deleting an assignee, and end-to-end tests covering the auth
-and task-CRUD flows.
+### Enhanced User Experience
+- **Drag-and-drop task management** - Kanban board view with drag-and-drop status changes
+- **Bulk operations** - Select multiple tasks for bulk status updates, reassignment, or deletion
+- **Advanced task filtering** - Date ranges, custom filters, saved filter presets
+- **Real-time notifications** - WebSocket updates when tasks are assigned or status changes
+- **Activity history** - Timeline of all actions taken on tasks and assignees
+- **Task templates** - Predefined task structures for common workflows
+
+### Performance & Scalability
+- **Infinite scroll pagination** - Replace traditional pagination for better UX
+- **Advanced caching** - Redis for session storage and query caching
+- **Full-text search** - PostgreSQL full-text search or Elasticsearch integration
+- **Performance monitoring** - Error tracking and performance metrics
+
+### Administration & Analytics
+- **Dashboard analytics** - Advanced charts, workload distribution, productivity metrics
+- **Email notifications** - Task assignments, due date reminders, status updates
+- **CSV/Excel export** - Export filtered task lists and reports
+- **Audit logs** - Complete history of all system changes
+- **User roles & permissions** - Multiple admin levels, team leads, read-only access
+
+### Technical Improvements
+- **Automated testing** - Unit, integration, and end-to-end test suites
+- **API documentation** - OpenAPI/Swagger documentation for REST endpoints
+- **Database backups** - Automated backup and restore procedures
+- **CI/CD pipeline** - Automated testing, building, and deployment
+- **Mobile app** - React Native or PWA for mobile access
+- **Internationalization** - Multi-language support
