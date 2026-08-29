@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { X, Loader2 } from "lucide-react";
+import { X, Loader2, AlertCircle } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -46,14 +46,36 @@ const EMPTY: FormState = {
 };
 
 function toFormState(task: TaskWithAssignee): FormState {
-  return {
-    title: task.title,
-    description: task.description ?? "",
-    status: task.status,
-    priority: task.priority,
-    dueDate: task.dueDate ? task.dueDate.slice(0, 10) : "",
-    assigneeId: task.assigneeId ?? "",
+  // Handle both string and Date formats for dueDate
+  const formatDueDate = (date: string | Date | null): string => {
+    try {
+      if (!date) return "";
+      if (typeof date === "string") {
+        return date.slice(0, 10); // Extract YYYY-MM-DD from ISO string
+      }
+      if (date instanceof Date) {
+        return date.toISOString().slice(0, 10); // Convert Date to YYYY-MM-DD
+      }
+      return "";
+    } catch (error) {
+      console.warn("Error formatting due date:", error);
+      return "";
+    }
   };
+
+  try {
+    return {
+      title: task?.title || "",
+      description: task?.description || "",
+      status: task?.status || "TODO",
+      priority: task?.priority || "MEDIUM",
+      dueDate: formatDueDate(task?.dueDate),
+      assigneeId: task?.assigneeId || "",
+    };
+  } catch (error) {
+    console.warn("Error converting task to form state:", error);
+    return EMPTY;
+  }
 }
 
 export function TaskForm({
@@ -69,15 +91,36 @@ export function TaskForm({
 
   if (!open) return null;
 
-  // Keyed so opening a different task remounts with fresh state.
-  return (
-    <TaskFormDialog
-      key={editingId ?? "new"}
-      editingId={editingId}
-      assignees={assignees}
-      task={task}
-    />
-  );
+  try {
+    // Keyed so opening a different task remounts with fresh state.
+    return (
+      <TaskFormDialog
+        key={editingId ?? "new"}
+        editingId={editingId}
+        assignees={assignees || []}
+        task={task}
+      />
+    );
+  } catch (error) {
+    console.error("TaskForm error:", error);
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="absolute inset-0 bg-slate-900/60" />
+        <div className="relative bg-white dark:bg-slate-900 p-6 rounded-lg max-w-sm">
+          <div className="flex items-center gap-3 text-red-600 dark:text-red-400">
+            <AlertCircle className="w-5 h-5" />
+            <p>Unable to load task form</p>
+          </div>
+          <button
+            onClick={() => useUIStore.getState().closeTaskForm()}
+            className="mt-4 px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded text-sm"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    );
+  }
 }
 
 function TaskFormDialog({
@@ -98,81 +141,150 @@ function TaskFormDialog({
   // list already cached. Either way it is available synchronously.
   const existing = !editingId
     ? undefined
-    : (task ??
-      queryClient
-        .getQueriesData<Paginated<TaskWithAssignee>>({
-          queryKey: queryKeys.tasks.all,
-        })
-        .flatMap(([, page]) => page?.items ?? [])
-        .find((item) => item.id === editingId));
+    : (() => {
+        try {
+          return (task ??
+            queryClient
+              .getQueriesData<Paginated<TaskWithAssignee>>({
+                queryKey: queryKeys.tasks.all,
+              })
+              .flatMap(([, page]) => page?.items ?? [])
+              .find((item) => item.id === editingId));
+        } catch (error) {
+          console.warn("Error finding existing task:", error);
+          return undefined;
+        }
+      })();
 
-  const [form, setForm] = useState<FormState>(() =>
-    existing ? toFormState(existing) : EMPTY
-  );
+  const [form, setForm] = useState<FormState>(() => {
+    try {
+      return existing ? toFormState(existing) : EMPTY;
+    } catch (error) {
+      console.warn("Error initializing form state:", error);
+      return EMPTY;
+    }
+  });
+  
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
   const [submitting, setSubmitting] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
   const isEditing = Boolean(editingId);
 
   useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") close();
-    };
+    try {
+      const onKey = (event: KeyboardEvent) => {
+        if (event.key === "Escape") close();
+      };
 
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
+      document.addEventListener("keydown", onKey);
+      return () => document.removeEventListener("keydown", onKey);
+    } catch (error) {
+      console.warn("Error setting up keyboard listener:", error);
+    }
   }, [close]);
 
   const update = (key: keyof FormState, value: string) => {
-    setForm((previous) => (previous ? { ...previous, [key]: value } : previous));
-    // Clear the field's error as soon as the admin edits it.
-    setFieldErrors((previous) => {
-      if (!previous[key]) return previous;
-      const next = { ...previous };
-      delete next[key];
-      return next;
-    });
+    try {
+      setForm((previous) => (previous ? { ...previous, [key]: value } : previous));
+      // Clear the field's error as soon as the admin edits it.
+      setFieldErrors((previous) => {
+        if (!previous[key]) return previous;
+        const next = { ...previous };
+        delete next[key];
+        return next;
+      });
+      setHasError(false);
+    } catch (error) {
+      console.warn("Error updating form field:", error);
+      setHasError(true);
+    }
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!form) return;
+    try {
+      event.preventDefault();
+      if (!form) return;
 
-    setSubmitting(true);
-    setFieldErrors({});
+      setSubmitting(true);
+      setFieldErrors({});
 
-    const payload = {
-      title: form.title,
-      description: form.description || undefined,
-      status: form.status,
-      priority: form.priority,
-      dueDate: form.dueDate || null,
-      assigneeId: form.assigneeId || null,
-    };
+      const payload = {
+        title: form.title || "",
+        description: form.description || undefined,
+        status: form.status || "TODO",
+        priority: form.priority || "MEDIUM",
+        dueDate: form.dueDate || null,
+        assigneeId: form.assigneeId || null,
+      };
 
-    const result = editingId
-      ? await updateTaskAction(editingId, payload)
-      : await createTaskAction(payload);
+      const result = editingId
+        ? await updateTaskAction(editingId, payload)
+        : await createTaskAction(payload);
 
-    setSubmitting(false);
+      setSubmitting(false);
 
-    if (!result.success) {
-      setFieldErrors(result.fields ?? {});
-      toast.error(result.error);
-      return;
+      if (!result.success) {
+        setFieldErrors(result.fields ?? {});
+        toast.error(result.error || "Something went wrong");
+        return;
+      }
+
+      // Server actions revalidate the pages; this refreshes the Query cache
+      // that the client-side list and dashboard read from.
+      queryClient.invalidateQueries({ queryKey: queryKeys.tasks.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.stats });
+      queryClient.invalidateQueries({ queryKey: queryKeys.assignees.all });
+
+      toast.success(result.message || "Task saved successfully");
+      close();
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      setSubmitting(false);
+      setHasError(true);
+      toast.error("Failed to save task");
     }
-
-    // Server actions revalidate the pages; this refreshes the Query cache
-    // that the client-side list and dashboard read from.
-    queryClient.invalidateQueries({ queryKey: queryKeys.tasks.all });
-    queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.stats });
-    queryClient.invalidateQueries({ queryKey: queryKeys.assignees.all });
-
-    toast.success(result.message);
-    close();
   };
 
-  const errorFor = (key: string) => fieldErrors[key]?.[0];
+  const errorFor = (key: string) => {
+    try {
+      return fieldErrors[key]?.[0];
+    } catch (error) {
+      console.warn("Error getting field error:", error);
+      return undefined;
+    }
+  };
+
+  if (hasError) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="absolute inset-0 bg-slate-900/60" onClick={close} />
+        <div className="relative bg-white dark:bg-slate-900 p-6 rounded-lg max-w-sm">
+          <div className="flex items-center gap-3 text-red-600 dark:text-red-400 mb-4">
+            <AlertCircle className="w-5 h-5" />
+            <p>Something went wrong</p>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                setHasError(false);
+                setForm(existing ? toFormState(existing) : EMPTY);
+              }}
+              className="px-4 py-2 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded text-sm"
+            >
+              Try Again
+            </button>
+            <button
+              onClick={close}
+              className="px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded text-sm"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
@@ -211,7 +323,7 @@ function TaskFormDialog({
               </label>
               <input
                 id="title"
-                value={form.title}
+                value={form?.title || ""}
                 onChange={(event) => update("title", event.target.value)}
                 placeholder="e.g. Redesign the onboarding flow"
                 className={fieldClass}
@@ -231,7 +343,7 @@ function TaskFormDialog({
               <textarea
                 id="description"
                 rows={3}
-                value={form.description}
+                value={form?.description || ""}
                 onChange={(event) => update("description", event.target.value)}
                 placeholder="Add more detail (optional)"
                 className={`${fieldClass} resize-none`}
@@ -251,7 +363,7 @@ function TaskFormDialog({
                 </label>
                 <select
                   id="status"
-                  value={form.status}
+                  value={form?.status || "TODO"}
                   onChange={(event) => update("status", event.target.value)}
                   className={`${fieldClass} cursor-pointer`}
                 >
@@ -269,7 +381,7 @@ function TaskFormDialog({
                 </label>
                 <select
                   id="priority"
-                  value={form.priority}
+                  value={form?.priority || "MEDIUM"}
                   onChange={(event) => update("priority", event.target.value)}
                   className={`${fieldClass} cursor-pointer`}
                 >
@@ -290,7 +402,7 @@ function TaskFormDialog({
                 <input
                   id="dueDate"
                   type="date"
-                  value={form.dueDate}
+                  value={form?.dueDate || ""}
                   onChange={(event) => update("dueDate", event.target.value)}
                   className={`${fieldClass} cursor-pointer`}
                 />
@@ -302,14 +414,14 @@ function TaskFormDialog({
                 </label>
                 <select
                   id="assignee"
-                  value={form.assigneeId}
+                  value={form?.assigneeId || ""}
                   onChange={(event) => update("assigneeId", event.target.value)}
                   className={`${fieldClass} cursor-pointer`}
                 >
                   <option value="">Unassigned</option>
-                  {assignees.map((assignee) => (
-                    <option key={assignee.id} value={assignee.id}>
-                      {assignee.name}
+                  {(assignees || []).map((assignee) => (
+                    <option key={assignee?.id} value={assignee?.id}>
+                      {assignee?.name}
                     </option>
                   ))}
                 </select>

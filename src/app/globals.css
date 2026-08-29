@@ -124,8 +124,10 @@
   }
   body {
     @apply bg-background text-foreground font-sans;
+    font-family: Arial, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
   }
   html {
     @apply font-sans;
+    font-family: Arial, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
   }
 }

@@ -37,7 +37,7 @@ export type Task = {
   description: string | null
   status: TaskStatus
   priority: TaskPriority
-  dueDate: string | null
+  dueDate: string | Date | null
   createdAt: string
   updatedAt: string
   assigneeId: string | null
