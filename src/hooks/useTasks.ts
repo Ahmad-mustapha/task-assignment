@@ -1,6 +1,8 @@
 "use client"
 
+import { useEffect } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { toast } from "sonner"
 
 import { apiFetch } from "@/lib/api-client"
 import { queryKeys, buildTaskQuery } from "@/lib/query-keys"
@@ -26,12 +28,31 @@ export function useTasks(
   })
 }
 
-export function useTask(id: string) {
-  return useQuery({
-    queryKey: queryKeys.tasks.detail(id),
-    queryFn: () => apiFetch<TaskWithAssignee>(`/api/tasks/${id}`),
-    enabled: Boolean(id),
-  })
+/**
+ * Warms the next page so paging forward renders from cache. Called after the
+ * current page loads; Query skips the fetch if the page is already cached.
+ */
+export function usePrefetchNextPage(
+  filters: TaskFilters,
+  currentPage: number,
+  totalPages: number
+) {
+  const queryClient = useQueryClient()
+
+  useEffect(() => {
+    if (currentPage >= totalPages) return
+
+    const next = { ...filters, page: currentPage + 1 }
+
+    queryClient.prefetchQuery({
+      queryKey: queryKeys.tasks.list(next),
+      queryFn: () =>
+        apiFetch<Paginated<TaskWithAssignee>>(
+          `/api/tasks?${buildTaskQuery(next)}`
+        ),
+    })
+    // filters is rebuilt each render, so key off its serialised form.
+  }, [queryClient, buildTaskQuery(filters), currentPage, totalPages]) // eslint-disable-line react-hooks/exhaustive-deps
 }
 
 /**
@@ -42,11 +63,16 @@ export function useChangeTaskStatus() {
   const queryClient = useQueryClient()
 
   return useMutation({
+    // Mutation endpoints answer with { message, data } so a caller can show
+    // the server's own wording rather than inventing its own.
     mutationFn: ({ id, status }: { id: string; status: string }) =>
-      apiFetch<TaskWithAssignee>(`/api/tasks/${id}`, {
-        method: "PATCH",
-        body: JSON.stringify({ status }),
-      }),
+      apiFetch<{ message: string; data: TaskWithAssignee }>(
+        `/api/tasks/${id}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({ status }),
+        }
+      ),
 
     onMutate: async ({ id, status }) => {
       await queryClient.cancelQueries({ queryKey: queryKeys.tasks.all })
@@ -72,10 +98,19 @@ export function useChangeTaskStatus() {
       return { previous }
     },
 
-    onError: (_error, _variables, context) => {
+    onError: (error, _variables, context) => {
+      // Put every touched cache entry back the way it was.
       context?.previous.forEach(([key, data]) => {
         queryClient.setQueryData(key, data)
       })
+
+      toast.error(
+        error instanceof Error ? error.message : "Could not update the status"
+      )
+    },
+
+    onSuccess: (response) => {
+      toast.success(response.message)
     },
 
     onSettled: () => {

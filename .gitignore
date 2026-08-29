@@ -63,3 +63,7 @@ Thumbs.db
 .claude/
 .cursor/
 .devin/
+
+# next dev regenerates these on every run
+AGENTS.md
+CLAUDE.md

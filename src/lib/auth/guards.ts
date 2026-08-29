@@ -3,10 +3,26 @@ import "server-only"
 import { redirect } from "next/navigation"
 
 import { readSession, type SessionPayload } from "@/lib/auth/session"
+import { prisma } from "@/lib/db"
 
 /** Current admin, or null. Use when absence is a valid state. */
 export async function getCurrentAdmin(): Promise<SessionPayload | null> {
-  return readSession()
+  const session = await readSession()
+  if (!session) return null
+
+  try {
+    const admin = await prisma.admin.findUnique({
+      where: { id: session.adminId },
+      select: { id: true, email: true, name: true },
+    })
+
+    if (!admin) return null
+
+    return { adminId: admin.id, email: admin.email, name: admin.name }
+  } catch (error) {
+    console.error("[auth] Could not verify admin session", error)
+    return null
+  }
 }
 
 /**
@@ -17,7 +33,7 @@ export async function getCurrentAdmin(): Promise<SessionPayload | null> {
  * without a verified session even if the matcher is misconfigured.
  */
 export async function requireAdmin(): Promise<SessionPayload> {
-  const admin = await readSession()
+  const admin = await getCurrentAdmin()
 
   if (!admin) {
     redirect("/login")
@@ -28,5 +44,5 @@ export async function requireAdmin(): Promise<SessionPayload> {
 
 /** Route-handler guard: returns the admin or null for a 401. */
 export async function requireAdminApi(): Promise<SessionPayload | null> {
-  return readSession()
+  return getCurrentAdmin()
 }

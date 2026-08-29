@@ -2,6 +2,7 @@ import "server-only"
 
 import { SignJWT, jwtVerify } from "jose"
 import { cookies } from "next/headers"
+import { z } from "zod"
 
 export const SESSION_COOKIE = "session"
 
@@ -12,6 +13,12 @@ export type SessionPayload = {
   email: string
   name: string
 }
+
+const SessionPayloadSchema = z.object({
+  adminId: z.string().min(1),
+  email: z.string().email(),
+  name: z.string().min(1),
+})
 
 function getSecret(): Uint8Array {
   const secret = process.env.JWT_SECRET
@@ -46,11 +53,7 @@ export async function verifySession(
       algorithms: ["HS256"],
     })
 
-    return {
-      adminId: payload.adminId as string,
-      email: payload.email as string,
-      name: payload.name as string,
-    }
+    return SessionPayloadSchema.parse(payload)
   } catch {
     return null
   }

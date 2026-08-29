@@ -13,7 +13,7 @@ import { flattenZodError, type FieldErrors } from "@/lib/api-response"
 import { Prisma } from "@/generated/prisma"
 
 export type ActionResult<T = void> =
-  | { success: true; data: T }
+  | { success: true; data: T; message: string }
   | { success: false; error: string; fields?: FieldErrors }
 
 function toActionError(error: unknown): ActionResult<never> {
@@ -58,7 +58,11 @@ export async function createAssigneeAction(
     const assignee = await assigneesData.createAssignee(data)
 
     revalidateAssigneeViews()
-    return { success: true, data: { id: assignee.id } }
+    return {
+      success: true,
+      data: { id: assignee.id },
+      message: "Assignee added",
+    }
   } catch (error) {
     return toActionError(error)
   }
@@ -75,7 +79,11 @@ export async function updateAssigneeAction(
     const assignee = await assigneesData.updateAssignee(id, data)
 
     revalidateAssigneeViews(id)
-    return { success: true, data: { id: assignee.id } }
+    return {
+      success: true,
+      data: { id: assignee.id },
+      message: "Assignee updated",
+    }
   } catch (error) {
     return toActionError(error)
   }
@@ -95,7 +103,17 @@ export async function deleteAssigneeAction(
     await assigneesData.deleteAssignee(id)
 
     revalidateAssigneeViews()
-    return { success: true, data: { unassignedCount } }
+    return {
+      success: true,
+      data: { unassignedCount },
+      // Says what actually happened to their work, not just that it worked.
+      message:
+        unassignedCount > 0
+          ? `Assignee deleted. ${unassignedCount} ${
+              unassignedCount === 1 ? "task is" : "tasks are"
+            } now unassigned.`
+          : "Assignee deleted",
+    }
   } catch (error) {
     return toActionError(error)
   }

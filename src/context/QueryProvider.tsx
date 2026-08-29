@@ -10,7 +10,11 @@ function makeQueryClient() {
         // Server components deliver the first paint, so a short window of
         // freshness keeps Query from immediately refetching what we just sent.
         staleTime: 30 * 1000,
-        refetchOnWindowFocus: false,
+        // Data can change from another tab or teammate; refetching on focus
+        // is cheap because staleTime already suppresses the noisy case.
+        refetchOnWindowFocus: true,
+        // Keep previous pages around so paging back is instant.
+        gcTime: 10 * 60 * 1000,
         retry: 1,
       },
     },

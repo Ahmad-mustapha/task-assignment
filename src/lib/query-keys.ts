@@ -1,6 +1,12 @@
 import type { TaskFilters } from "@/types"
 
 /**
+ * The dashboard's chart window. Shared so the server seeds exactly the query
+ * the client hook asks for — a mismatch would refetch on every mount.
+ */
+export const DASHBOARD_TASK_QUERY = { page: 1, pageSize: 100 } as const
+
+/**
  * Single source of truth for cache keys. Mutations invalidate by prefix:
  * `queryClient.invalidateQueries({ queryKey: queryKeys.tasks.all })`.
  */

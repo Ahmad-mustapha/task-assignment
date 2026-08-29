@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server"
 import { jwtVerify } from "jose"
 
+import { safeRedirectPath } from "@/lib/request-security"
+
 const SESSION_COOKIE = "session"
 
 /**
@@ -27,8 +29,9 @@ export default async function proxy(request: NextRequest) {
   if (!isAuthenticated) {
     const loginUrl = new URL("/login", request.url)
     // Remember where they were headed so login can send them back.
-    if (pathname !== "/") {
-      loginUrl.searchParams.set("from", pathname)
+    const from = safeRedirectPath(pathname)
+    if (pathname !== "/" && from !== "/dashboard") {
+      loginUrl.searchParams.set("from", from)
     }
     return NextResponse.redirect(loginUrl)
   }

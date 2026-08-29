@@ -14,6 +14,12 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Prisma Client is generated output, not source.
     "src/generated/**",
+    // Local/generated agent tooling is not application source.
+    ".agents/**",
+    ".claude/**",
+    ".codex/**",
+    ".cursor/**",
+    ".devin/**",
   ]),
 ]);
 

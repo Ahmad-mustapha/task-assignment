@@ -10,11 +10,12 @@ import {
   TaskStatusChangeSchema,
 } from "@/lib/validation/task.schema"
 import { flattenZodError, type FieldErrors } from "@/lib/api-response"
+import { STATUS_LABELS } from "@/types"
 import { ZodError } from "zod"
 
 /** Uniform result so forms can render field errors without throwing. */
 export type ActionResult<T = void> =
-  | { success: true; data: T }
+  | { success: true; data: T; message: string }
   | { success: false; error: string; fields?: FieldErrors }
 
 function toActionError(error: unknown): ActionResult<never> {
@@ -46,7 +47,7 @@ export async function createTaskAction(
     const task = await tasksData.createTask(data)
 
     revalidateTaskViews()
-    return { success: true, data: { id: task.id } }
+    return { success: true, data: { id: task.id }, message: "Task created" }
   } catch (error) {
     return toActionError(error)
   }
@@ -63,7 +64,7 @@ export async function updateTaskAction(
     const task = await tasksData.updateTask(id, data)
 
     revalidateTaskViews(id)
-    return { success: true, data: { id: task.id } }
+    return { success: true, data: { id: task.id }, message: "Task updated" }
   } catch (error) {
     return toActionError(error)
   }
@@ -75,7 +76,7 @@ export async function deleteTaskAction(id: string): Promise<ActionResult> {
     await tasksData.deleteTask(id)
 
     revalidateTaskViews()
-    return { success: true, data: undefined }
+    return { success: true, data: undefined, message: "Task deleted" }
   } catch (error) {
     return toActionError(error)
   }
@@ -93,7 +94,11 @@ export async function changeTaskStatusAction(
     await tasksData.updateTask(id, { status })
 
     revalidateTaskViews(id)
-    return { success: true, data: undefined }
+    return {
+      success: true,
+      data: undefined,
+      message: `Moved to ${STATUS_LABELS[status]}`,
+    }
   } catch (error) {
     return toActionError(error)
   }

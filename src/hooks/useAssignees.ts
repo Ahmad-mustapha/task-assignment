@@ -15,6 +15,8 @@ export function useAssignees(initialData?: AssigneeWithTaskCount[]) {
     queryKey: queryKeys.assignees.list(),
     queryFn: () => apiFetch<AssigneeWithTaskCount[]>("/api/assignees"),
     initialData,
-    staleTime: 5 * 60 * 1000,
+    // Uses the shared 30s staleTime. A longer window looked like a win, but
+    // task mutations change each assignee's count, and invalidation overrides
+    // staleTime anyway — so the two settings just disagreed.
   })
 }
