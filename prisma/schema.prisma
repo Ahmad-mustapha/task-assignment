@@ -1,0 +1,72 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // Migrations run over the session pooler; the transaction pooler cannot
+  // hold the advisory locks and prepared statements Migrate needs.
+  directUrl = env("DIRECT_URL")
+}
+
+/// The single admin who logs in. Assignees are records, not users — they
+/// never authenticate, so they carry no password.
+model Admin {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  createdAt    DateTime @default(now())
+
+  @@map("admins")
+}
+
+model Assignee {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  role      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tasks Task[]
+
+  @@map("assignees")
+}
+
+model Task {
+  id          String       @id @default(cuid())
+  title       String
+  description String?
+  status      TaskStatus   @default(TODO)
+  priority    TaskPriority @default(MEDIUM)
+  dueDate     DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  // Nullable so a task outlives its assignee: deleting an assignee sets this
+  // to null and the task shows as "Unassigned" rather than disappearing.
+  assigneeId String?
+  assignee   Assignee? @relation(fields: [assigneeId], references: [id], onDelete: SetNull)
+
+  // The task list is always filtered and sorted by these.
+  @@index([status])
+  @@index([priority])
+  @@index([assigneeId])
+  @@index([dueDate])
+  @@map("tasks")
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
