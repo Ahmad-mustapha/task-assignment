@@ -175,6 +175,8 @@ or `migrate`, so it cannot drive a conventional schema workflow.
 **Theme is class-based** and defaults to light with an explicit toggle in the
 header.
 
+**Font is Arial-first** with comprehensive fallbacks including system fonts.
+
 ## Features
 
 ### Core
